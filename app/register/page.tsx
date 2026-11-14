@@ -4,11 +4,12 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Brand } from "@/components/Brand";
 import { createClient } from "@/lib/supabase/client";
-import { ArrowLeft, Mail, Lock } from "lucide-react";
+import { ArrowLeft, Mail, Lock, ShieldCheck } from "lucide-react";
 
 export default function RegisterPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState(""); // Yangi qo'shildi
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const router = useRouter();
@@ -18,41 +19,51 @@ export default function RegisterPage() {
     setBusy(true);
     setMessage("");
 
+    // 1. Parollar bir xilligini tekshirish
+    if (password !== confirmPassword) {
+      setMessage("Xatolik: Kiritilgan parollar bir-biriga mos kelmadi!");
+      setBusy(false);
+      return;
+    }
+
+    if (password.length < 6) {
+      setMessage("Xatolik: Parol kamida 6 ta belgidan iborat bo'lishi kerak!");
+      setBusy(false);
+      return;
+    }
+
     try {
       const supabase = createClient();
       
-      // 1. Ro'yxatdan o'tish
+      // 2. Ro'yxatdan o'tish
       const { data, error } = await supabase.auth.signUp({
         email: email.trim(),
         password: password,
       });
 
-      if (error) {
-        throw new Error(`Supabase xatosi: ${error.message}`);
-      }
+      if (error) throw error;
 
-      // 2. Agar sessiya bo'lsa (Confirm email o'chirilgan), darhol kiradi
-      if (data?.session) {
+      // 3. Agar email tasdiqlash o'chirilgan bo'lsa, sessiya keladi
+      if (data.session) {
         router.push("/dashboard");
         router.refresh();
-        return;
-      }
-
-      // 3. Agar sessiya bo'lmasa, demak Confirm email yoniq qolgan
-      setMessage(
-        "Hisobingiz yaratildi, lekin email tasdiqlash yoniq qolgan ko'rinadi. Iltimos, pochtangizni tekshiring."
-      );
-      
-    } catch (err: any) {
-      // Barcha xatolarni ekranga chiqaramiz
-      console.error("REGISTER_XATO:", err);
-      
-      if (err.message?.includes("User already registered")) {
-        setMessage("Bu email allaqachon ro'yxatdan o'tgan. Iltimos, tizimga kiring.");
-      } else if (err.message?.includes("Invalid login credentials")) {
-         setMessage("Tizimga ulanishda xato. Vercel'dagi Supabase kalitlari noto'g'ri bo'lishi mumkin.");
       } else {
-        setMessage(err.message || "Ro'yxatdan o'tishda noma'lum xatolik yuz berdi.");
+        // Agar sessiya bo'lmasa (tasdiqlash yoniq bo'lsa ham), majburan kiritamiz
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email: email.trim(),
+          password: password,
+        });
+
+        if (signInError) throw new Error(signInError.message);
+        
+        router.push("/dashboard");
+        router.refresh();
+      }
+    } catch (err: any) {
+      if (err.message?.includes("User already registered")) {
+        setMessage("Bu email allaqachon ro'yxatdan o'tgan. Iltimos, kirish sahifasidan foydalaning.");
+      } else {
+        setMessage(`Xatolik: ${err.message || "Noma'lum xatolik"}`);
       }
     } finally {
       setBusy(false);
@@ -69,7 +80,7 @@ export default function RegisterPage() {
           <Brand />
           <h1 className="mt-8 text-3xl font-black">Ro'yxatdan o'tish</h1>
           <p className="mt-2 text-sm leading-6 text-muted">
-            Yangi hisob yaratish uchun quyidagi ma'lumotlarni to'ldiring.
+            Yangi hisob yaratish uchun ma'lumotlarni to'ldiring.
           </p>
 
           <form onSubmit={handleRegister} className="mt-6 space-y-4">
@@ -78,9 +89,7 @@ export default function RegisterPage() {
               <div className="relative mt-2">
                 <Mail className="absolute left-3 top-3.5 text-gray-400" size={18} />
                 <input
-                  required
-                  type="email"
-                  value={email}
+                  required type="email" value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full rounded-xl border border-[#e6e2d9] bg-[#fffefa] pl-10 pr-4 py-3 outline-none focus:border-[#85b39d]"
                   placeholder="email@example.com"
@@ -93,10 +102,7 @@ export default function RegisterPage() {
               <div className="relative mt-2">
                 <Lock className="absolute left-3 top-3.5 text-gray-400" size={18} />
                 <input
-                  required
-                  minLength={6}
-                  type="password"
-                  value={password}
+                  required type="password" value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full rounded-xl border border-[#e6e2d9] bg-[#fffefa] pl-10 pr-4 py-3 outline-none focus:border-[#85b39d]"
                   placeholder="Kamida 6 belgi"
@@ -104,7 +110,21 @@ export default function RegisterPage() {
               </div>
             </label>
 
-            <button type="submit" disabled={busy} className="btn-primary w-full mt-2 disabled:opacity-50">
+            {/* Parolni tasdiqlash maydoni */}
+            <label className="block text-sm font-bold">
+              Parolni tasdiqlang
+              <div className="relative mt-2">
+                <ShieldCheck className="absolute left-3 top-3.5 text-gray-400" size={18} />
+                <input
+                  required type="password" value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="w-full rounded-xl border border-[#e6e2d9] bg-[#fffefa] pl-10 pr-4 py-3 outline-none focus:border-[#85b39d]"
+                  placeholder="Parolni qayta yozing"
+                />
+              </div>
+            </label>
+
+            <button type="submit" disabled={busy} className="btn-primary w-full mt-4 disabled:opacity-50">
               {busy ? "Kutilmoqda..." : "Hisob yaratish va kirish"}
             </button>
           </form>
