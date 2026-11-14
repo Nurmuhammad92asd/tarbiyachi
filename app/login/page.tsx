@@ -13,7 +13,6 @@ export default function LoginPage() {
   const [message, setMessage] = useState("");
   const router = useRouter();
 
-  // 1. GOOGLE ORQALI KIRISH
   async function googleLogin() {
     setBusy(true);
     setMessage("");
@@ -30,7 +29,6 @@ export default function LoginPage() {
     }
   }
 
-  // 2. EMAIL BILAN KIRISH (Login)
   async function emailLogin(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
@@ -42,44 +40,7 @@ export default function LoginPage() {
       router.push("/dashboard");
       router.refresh();
     } catch (e) {
-      setMessage(e instanceof Error ? e.message : "Kirishda xatolik. Hisobingiz yo'q bo'lsa, pastdagi 'Yangi hisob yaratish'ni bosing.");
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  // 3. YANGI HISOB YARATISH (Sign Up)
-  async function signUp() {
-    if (!email.trim() || !password.trim()) {
-      setMessage("Iltimos, avval email va parolni kiriting!");
-      return;
-    }
-    if (password.length < 6) {
-      setMessage("Parol kamida 6 ta belgidan iborat bo'lishi kerak!");
-      return;
-    }
-
-    setBusy(true);
-    setMessage("");
-    try {
-      const supabase = createClient();
-      const { data, error } = await supabase.auth.signUp({
-        email: email.trim(),
-        password: password,
-        options: { 
-          emailRedirectTo: `${window.location.origin}/auth/callback?next=/dashboard` 
-        },
-      });
-      
-      if (error) throw error;
-      
-      if (data?.user?.identities?.length === 0) {
-        setMessage("Bu email allaqachon ro'yxatdan o'tgan.");
-      } else {
-        setMessage("Muvaffaqiyatli ro'yxatdan o'tdingiz! Pochtangizni tekshiring yoki tizimga kiring.");
-      }
-    } catch (e) {
-      setMessage(e instanceof Error ? e.message : "Ro'yxatdan o'tishda xatolik.");
+      setMessage(e instanceof Error ? e.message : "Kirishda xatolik.");
     } finally {
       setBusy(false);
     }
@@ -95,7 +56,7 @@ export default function LoginPage() {
           <Brand />
           <h1 className="mt-9 text-3xl font-black">Akademiyaga xush kelibsiz!</h1>
           <p className="mt-2 text-sm leading-6 text-muted">
-            O'qishni davom ettirish uchun hisobingizga kiring yoki ro'yxatdan o'ting.
+            O'qishni davom ettirish uchun hisobingizga kiring.
           </p>
 
           <button type="button" onClick={googleLogin} disabled={busy} className="btn-secondary mt-7 w-full">
@@ -107,7 +68,6 @@ export default function LoginPage() {
             <span className="h-px flex-1 bg-[#eae6dd]" />
           </div>
 
-          {/* LOGIN FORMASI */}
           <form onSubmit={emailLogin} className="space-y-4">
             <label className="block text-sm font-bold">
               Email
@@ -137,15 +97,16 @@ export default function LoginPage() {
             </button>
           </form>
 
-          {/* YANGI HISOB YARATISH TUGMASI (Formadan tashqarida) */}
-          <button
-            type="button"
-            onClick={signUp}
-            disabled={busy}
-            className="mt-4 w-full rounded-xl border-2 border-[#668b78] py-3 text-sm font-bold text-[#668b78] hover:bg-[#eff6f0] disabled:opacity-50 transition-colors"
-          >
-            Yangi hisob yaratish
-          </button>
+          {/* ENG MUHIM O'ZGARISH: Endi bu tugma yangi sahifaga o'tadi */}
+          <div className="mt-4 text-center">
+            <p className="text-sm text-muted">Hisobingiz yo'qmi?</p>
+            <Link
+              href="/register"
+              className="mt-2 inline-block w-full rounded-xl border-2 border-[#668b78] py-3 text-sm font-bold text-[#668b78] hover:bg-[#eff6f0] transition-colors"
+            >
+              Yangi hisob yaratish
+            </Link>
+          </div>
 
           {message && (
             <p role="status" className="mt-4 rounded-xl bg-[#fff3dd] p-3 text-sm text-[#72572b]">
