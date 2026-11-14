@@ -9,7 +9,7 @@ import { ArrowLeft, Mail, Lock, ShieldCheck } from "lucide-react";
 export default function RegisterPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState(""); // Yangi qo'shildi
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const router = useRouter();
@@ -19,7 +19,6 @@ export default function RegisterPage() {
     setBusy(true);
     setMessage("");
 
-    // 1. Parollar bir xilligini tekshirish
     if (password !== confirmPassword) {
       setMessage("Xatolik: Kiritilgan parollar bir-biriga mos kelmadi!");
       setBusy(false);
@@ -34,8 +33,6 @@ export default function RegisterPage() {
 
     try {
       const supabase = createClient();
-      
-      // 2. Ro'yxatdan o'tish
       const { data, error } = await supabase.auth.signUp({
         email: email.trim(),
         password: password,
@@ -43,28 +40,20 @@ export default function RegisterPage() {
 
       if (error) throw error;
 
-      // 3. Agar email tasdiqlash o'chirilgan bo'lsa, sessiya keladi
       if (data.session) {
         router.push("/dashboard");
         router.refresh();
       } else {
-        // Agar sessiya bo'lmasa (tasdiqlash yoniq bo'lsa ham), majburan kiritamiz
         const { error: signInError } = await supabase.auth.signInWithPassword({
           email: email.trim(),
           password: password,
         });
-
-        if (signInError) throw new Error(signInError.message);
-        
+        if (signInError) throw new Error("Email tasdiqlash talab qilinmoqda yoki kalit xato.");
         router.push("/dashboard");
         router.refresh();
       }
     } catch (err: any) {
-      if (err.message?.includes("User already registered")) {
-        setMessage("Bu email allaqachon ro'yxatdan o'tgan. Iltimos, kirish sahifasidan foydalaning.");
-      } else {
-        setMessage(`Xatolik: ${err.message || "Noma'lum xatolik"}`);
-      }
+      setMessage(`Xatolik: ${err.message || "Noma'lum xatolik"}`);
     } finally {
       setBusy(false);
     }
@@ -110,7 +99,6 @@ export default function RegisterPage() {
               </div>
             </label>
 
-            {/* Parolni tasdiqlash maydoni */}
             <label className="block text-sm font-bold">
               Parolni tasdiqlang
               <div className="relative mt-2">
