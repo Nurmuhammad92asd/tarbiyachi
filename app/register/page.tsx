@@ -1,5 +1,3 @@
-mkdir -p app/register
-cat > app/register/page.tsx << 'EOF'
 "use client";
 import { useState } from "react";
 import Link from "next/link";
@@ -108,4 +106,3 @@ export default function RegisterPage() {
     </main>
   );
 }
-EOF
