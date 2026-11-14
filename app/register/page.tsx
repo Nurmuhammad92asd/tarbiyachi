@@ -13,7 +13,6 @@ export default function RegisterPage() {
   const [message, setMessage] = useState("");
   const router = useRouter();
 
-  // MANA SHU YERGA YANGI KOD QO'YILDI
   async function handleRegister(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
@@ -21,29 +20,39 @@ export default function RegisterPage() {
 
     try {
       const supabase = createClient();
+      
+      // 1. Ro'yxatdan o'tish
       const { data, error } = await supabase.auth.signUp({
         email: email.trim(),
         password: password,
       });
 
-      if (error) throw error;
+      if (error) {
+        throw new Error(`Supabase xatosi: ${error.message}`);
+      }
 
-      // Agar Confirm email o'chirilgan bo'lsa, session keladi va darhol kiradi
-      if (data.session) {
+      // 2. Agar sessiya bo'lsa (Confirm email o'chirilgan), darhol kiradi
+      if (data?.session) {
         router.push("/dashboard");
         router.refresh();
-      } else {
-        // Confirm email yoniq bo'lsa, session bo'lmaydi.
-        // Foydalanuvchiga xabar beramiz, avtomatik kirishga urinmaymiz.
-        setMessage(
-          "Hisobingiz yaratildi! Iltimos, pochtangizga kelgan tasdiqlash havolasini bosing va keyin tizimga kiring."
-        );
+        return;
       }
+
+      // 3. Agar sessiya bo'lmasa, demak Confirm email yoniq qolgan
+      setMessage(
+        "Hisobingiz yaratildi, lekin email tasdiqlash yoniq qolgan ko'rinadi. Iltimos, pochtangizni tekshiring."
+      );
+      
     } catch (err: any) {
+      // Barcha xatolarni ekranga chiqaramiz
+      console.error("REGISTER_XATO:", err);
+      
       if (err.message?.includes("User already registered")) {
         setMessage("Bu email allaqachon ro'yxatdan o'tgan. Iltimos, tizimga kiring.");
+      } else if (err.message?.includes("Invalid login credentials")) {
+         setMessage("Tizimga ulanishda xato. Vercel'dagi Supabase kalitlari noto'g'ri bo'lishi mumkin.");
       } else {
-        setMessage(err.message || "Ro'yxatdan o'tishda xatolik yuz berdi.");
+        setMessage(err.message || "Ro'yxatdan o'tishda noma'lum xatolik yuz berdi.");
       }
     } finally {
       setBusy(false);
