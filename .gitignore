@@ -1,0 +1,36 @@
+# dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# next.js
+.next/
+out/
+build/
+dist/
+
+# production
+*.log
+
+# env
+.env
+.env*.local
+
+# misc
+.DS_Store
+*.pem
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# vercel
+.vercel
+
+# supabase
+.supabase
+
+node_modules/
+.next/
+.git-eski-zaxira/
+.git-eski-zaxira/
