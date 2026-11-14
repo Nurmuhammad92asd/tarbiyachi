@@ -47,17 +47,36 @@ export default function LoginPage() {
   }
 
   async function signUp() {
+    // 1. Bo'sh joylarni tekshirish (Anonymous xatosini oldini oladi)
+    if (!email.trim() || !password.trim()) {
+      setMessage("Iltimos, email va parolni kiriting.");
+      return;
+    }
+    if (password.length < 6) {
+      setMessage("Parol kamida 6 ta belgidan iborat bo'lishi kerak.");
+      return;
+    }
+
     setBusy(true);
     setMessage("");
     try {
       const supabase = createClient();
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: { emailRedirectTo: `${window.location.origin}/auth/callback?next=/dashboard` },
+      const { data, error } = await supabase.auth.signUp({
+        email: email.trim(),
+        password: password,
+        options: { 
+          emailRedirectTo: `${window.location.origin}/auth/callback?next=/dashboard` 
+        },
       });
+      
       if (error) throw error;
-      setMessage("Tasdiqlash havolasi emailingizga yuborildi.");
+      
+      // Agar email tasdiqlash yoqilgan bo'lsa
+      if (data?.user?.identities?.length === 0) {
+        setMessage("Bu email allaqachon ro'yxatdan o'tgan.");
+      } else {
+        setMessage("Tasdiqlash havolasi emailingizga yuborildi. Iltimos, pochtangizni tekshiring.");
+      }
     } catch (e) {
       setMessage(e instanceof Error ? e.message : "Ro'yxatdan o'tishda xatolik.");
     } finally {
@@ -116,10 +135,11 @@ export default function LoginPage() {
             </button>
           </form>
 
-          {/* DIQQAT: bu yerdagi disabled sharti olib tashlandi */}
+          {/* Tugma har doim bosiladi, xato bo'lsa tepada ogohlantiradi */}
           <button
             onClick={signUp}
-            className="mt-3 w-full rounded-xl py-3 text-sm font-bold text-[#668b78] hover:bg-[#eff6f0]"
+            disabled={busy}
+            className="mt-3 w-full rounded-xl py-3 text-sm font-bold text-[#668b78] hover:bg-[#eff6f0] disabled:opacity-50"
           >
             Yangi hisob yaratish
           </button>
