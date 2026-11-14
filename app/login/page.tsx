@@ -13,6 +13,7 @@ export default function LoginPage() {
   const [message, setMessage] = useState("");
   const router = useRouter();
 
+  // 1. GOOGLE ORQALI KIRISH
   async function googleLogin() {
     setBusy(true);
     setMessage("");
@@ -29,6 +30,7 @@ export default function LoginPage() {
     }
   }
 
+  // 2. EMAIL BILAN KIRISH (Login)
   async function emailLogin(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
@@ -40,20 +42,20 @@ export default function LoginPage() {
       router.push("/dashboard");
       router.refresh();
     } catch (e) {
-      setMessage(e instanceof Error ? e.message : "Kirishda xatolik.");
+      setMessage(e instanceof Error ? e.message : "Kirishda xatolik. Hisobingiz yo'q bo'lsa, pastdagi 'Yangi hisob yaratish'ni bosing.");
     } finally {
       setBusy(false);
     }
   }
 
+  // 3. YANGI HISOB YARATISH (Sign Up)
   async function signUp() {
-    // 1. Bo'sh joylarni tekshirish (Anonymous xatosini oldini oladi)
     if (!email.trim() || !password.trim()) {
-      setMessage("Iltimos, email va parolni kiriting.");
+      setMessage("Iltimos, avval email va parolni kiriting!");
       return;
     }
     if (password.length < 6) {
-      setMessage("Parol kamida 6 ta belgidan iborat bo'lishi kerak.");
+      setMessage("Parol kamida 6 ta belgidan iborat bo'lishi kerak!");
       return;
     }
 
@@ -71,11 +73,10 @@ export default function LoginPage() {
       
       if (error) throw error;
       
-      // Agar email tasdiqlash yoqilgan bo'lsa
       if (data?.user?.identities?.length === 0) {
         setMessage("Bu email allaqachon ro'yxatdan o'tgan.");
       } else {
-        setMessage("Tasdiqlash havolasi emailingizga yuborildi. Iltimos, pochtangizni tekshiring.");
+        setMessage("Muvaffaqiyatli ro'yxatdan o'tdingiz! Pochtangizni tekshiring yoki tizimga kiring.");
       }
     } catch (e) {
       setMessage(e instanceof Error ? e.message : "Ro'yxatdan o'tishda xatolik.");
@@ -97,7 +98,7 @@ export default function LoginPage() {
             O'qishni davom ettirish uchun hisobingizga kiring yoki ro'yxatdan o'ting.
           </p>
 
-          <button onClick={googleLogin} disabled={busy} className="btn-secondary mt-7 w-full">
+          <button type="button" onClick={googleLogin} disabled={busy} className="btn-secondary mt-7 w-full">
             <Chrome size={18} /> Google orqali davom etish
           </button>
 
@@ -106,6 +107,7 @@ export default function LoginPage() {
             <span className="h-px flex-1 bg-[#eae6dd]" />
           </div>
 
+          {/* LOGIN FORMASI */}
           <form onSubmit={emailLogin} className="space-y-4">
             <label className="block text-sm font-bold">
               Email
@@ -130,16 +132,17 @@ export default function LoginPage() {
                 placeholder="Kamida 6 belgi"
               />
             </label>
-            <button disabled={busy} className="btn-primary w-full disabled:opacity-50">
+            <button type="submit" disabled={busy} className="btn-primary w-full disabled:opacity-50">
               {busy ? "Kutilmoqda..." : <><Mail size={17} /> Email bilan kirish</>}
             </button>
           </form>
 
-          {/* Tugma har doim bosiladi, xato bo'lsa tepada ogohlantiradi */}
+          {/* YANGI HISOB YARATISH TUGMASI (Formadan tashqarida) */}
           <button
+            type="button"
             onClick={signUp}
             disabled={busy}
-            className="mt-3 w-full rounded-xl py-3 text-sm font-bold text-[#668b78] hover:bg-[#eff6f0] disabled:opacity-50"
+            className="mt-4 w-full rounded-xl border-2 border-[#668b78] py-3 text-sm font-bold text-[#668b78] hover:bg-[#eff6f0] disabled:opacity-50 transition-colors"
           >
             Yangi hisob yaratish
           </button>
@@ -149,11 +152,6 @@ export default function LoginPage() {
               {message}
             </p>
           )}
-
-          <p className="mt-6 text-xs leading-5 text-muted">
-            Google orqali kirish shaxsning kasbiy malakasi yoki attestatsiya toifasini tasdiqlamaydi.
-            Profil ma'lumotlarini keyin to'ldirishingiz mumkin.
-          </p>
         </div>
       </div>
     </main>
