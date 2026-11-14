@@ -13,6 +13,7 @@ export default function RegisterPage() {
   const [message, setMessage] = useState("");
   const router = useRouter();
 
+  // MANA SHU YERGA YANGI KOD QO'YILDI
   async function handleRegister(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
@@ -27,20 +28,23 @@ export default function RegisterPage() {
 
       if (error) throw error;
 
+      // Agar Confirm email o'chirilgan bo'lsa, session keladi va darhol kiradi
       if (data.session) {
         router.push("/dashboard");
         router.refresh();
       } else {
-        const { error: signInError } = await supabase.auth.signInWithPassword({
-          email: email.trim(),
-          password: password,
-        });
-        if (signInError) throw signInError;
-        router.push("/dashboard");
-        router.refresh();
+        // Confirm email yoniq bo'lsa, session bo'lmaydi.
+        // Foydalanuvchiga xabar beramiz, avtomatik kirishga urinmaymiz.
+        setMessage(
+          "Hisobingiz yaratildi! Iltimos, pochtangizga kelgan tasdiqlash havolasini bosing va keyin tizimga kiring."
+        );
       }
-    } catch (e) {
-      setMessage(e instanceof Error ? e.message : "Ro'yxatdan o'tishda xatolik yuz berdi.");
+    } catch (err: any) {
+      if (err.message?.includes("User already registered")) {
+        setMessage("Bu email allaqachon ro'yxatdan o'tgan. Iltimos, tizimga kiring.");
+      } else {
+        setMessage(err.message || "Ro'yxatdan o'tishda xatolik yuz berdi.");
+      }
     } finally {
       setBusy(false);
     }
